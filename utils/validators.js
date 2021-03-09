@@ -1,4 +1,3 @@
-
 const { body } = require("express-validator");
 
 module.exports = {
@@ -58,6 +57,6 @@ module.exports = {
       .isLength({ min: 3 })
       .withMessage("Username must be at least 3 characters")
       .isLength({ max: 40 })
-      .withMessage("Username must be less than 30 characters")
-  ]
+      .withMessage("Username must be less than 30 characters"),
+  ],
 };

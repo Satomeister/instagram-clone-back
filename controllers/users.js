@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const { user: userPopulate } = require("../utils/populates");
 
 class UsersController {
   async index(req, res) {
@@ -36,23 +37,22 @@ class UsersController {
     try {
       const user = await User.findOne({
         username: req.params.username,
-      }).populate([
-        {
-          path: "followers",
-          select: "_id fullname username avatar",
-        },
-        {
-          path: "following",
-          select: "_id fullname username avatar",
-        },
-      ]);
+      })
+        .populate(userPopulate)
+        .exec();
 
-      return res.json({
+      if (!user) {
+        return res.status(404).json({
+          status: "error",
+          message: "User not found",
+        });
+      }
+
+      res.json({
         status: "success",
         data: user.toJSON(),
       });
     } catch (error) {
-      console.log(error)
       res.status(500).json({
         status: "error",
         error,
@@ -63,9 +63,17 @@ class UsersController {
   async follow(req, res) {
     try {
       const authUserId = req.user._id;
-      const candidate = await User.findOne({ _id: req.params.userId });
+      const candidate = await User.findOne({ _id: req.params.userId }).populate(
+        {
+          path: "story",
+          populate: {
+            path: "author",
+            select: "fullname username avatar",
+          },
+        }
+      );
 
-      if(candidate._id === authUserId) {
+      if (candidate._id === authUserId) {
         return res.status(400).json({
           status: "error",
         });
@@ -84,9 +92,8 @@ class UsersController {
         await candidate.save();
       }
 
-      return res.json({ status: "success", data: candidate.short() });
+      res.json({ status: "success", data: candidate.short() });
     } catch (error) {
-      console.log(error);
       res.status(500).json({
         status: "error",
         error,
@@ -97,9 +104,17 @@ class UsersController {
   async unfollow(req, res) {
     try {
       const authUserId = req.user._id;
-      const candidate = await User.findOne({ _id: req.params.userId });
+      const candidate = await User.findOne({ _id: req.params.userId }).populate(
+        {
+          path: "story",
+          populate: {
+            path: "author",
+            select: "fullname username avatar",
+          },
+        }
+      );
 
-      if(candidate._id === authUserId) {
+      if (candidate._id === authUserId) {
         return res.status(400).json({
           status: "error",
         });
@@ -122,9 +137,37 @@ class UsersController {
         await candidate.save();
       }
 
-      return res.json({ status: "success", data: candidate.short() });
+      res.json({ status: "success", data: candidate.short() });
     } catch (error) {
-      console.log(error);
+      res.status(500).json({
+        status: "error",
+        error,
+      });
+    }
+  }
+
+  async getSuggestions(req, res) {
+    try {
+      const suggestions = await User.find({
+        _id: { $ne: req.user._id },
+        followers: { $ne: req.user._id },
+      })
+        .sort({ followers: -1 })
+        .limit(5)
+        .populate({
+          path: "story",
+          populate: {
+            path: "author",
+            select: "fullname username avatar date",
+          },
+        })
+        .select("username fullname avatar story");
+
+      res.json({
+        status: "success",
+        data: suggestions,
+      });
+    } catch (error) {
       res.status(500).json({
         status: "error",
         error,

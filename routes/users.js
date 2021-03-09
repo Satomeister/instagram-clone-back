@@ -5,9 +5,21 @@ const UsersController = require("../controllers/users");
 const route = Router();
 
 route.get("/", UsersController.index);
-route.get('/:username', UsersController.getUser)
-route.put('/follow/:userId', passport.authenticate("jwt"), UsersController.follow)
-route.put('/unfollow/:userId', passport.authenticate("jwt"), UsersController.unfollow)
-
+route.put(
+  "/follow/:userId",
+  passport.authenticate("jwt"),
+  UsersController.follow
+);
+route.put(
+  "/unfollow/:userId",
+  passport.authenticate("jwt"),
+  UsersController.unfollow
+);
+route.get(
+  "/suggestions",
+  passport.authenticate("jwt"),
+  UsersController.getSuggestions
+);
+route.get("/:username", UsersController.getUser);
 
 module.exports = route;

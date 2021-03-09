@@ -3,25 +3,18 @@ const LocalStrategy = require("passport-local").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
 const JwtStrategy = require("passport-jwt").Strategy;
 const User = require("../models/user");
+const { user: userPopulate } = require("../utils/populates");
 
 passport.use(
   new LocalStrategy(
     { usernameField: "email", passwordField: "password" },
     async (username, password, done) => {
       try {
-
         const user = await User.findOne({
           $or: [{ email: username }, { username: username }],
-        }).populate([
-          {
-            path: "followers",
-            select: "_id fullname username avatar",
-          },
-          {
-            path: "following",
-            select: "_id fullname username avatar",
-          },
-        ]).exec();
+        })
+          .populate(userPopulate)
+          .exec();
 
         if (!user) {
           return done(null, false, { message: "Invalid email or password" });
@@ -48,16 +41,10 @@ passport.use(
     },
     async (payload, done) => {
       try {
-        const user = await User.findById(payload.data._id).populate([
-          {
-            path: "followers",
-            select: "_id fullname username avatar",
-          },
-          {
-            path: "following",
-            select: "_id fullname username avatar",
-          },
-        ]).exec();
+        const user = await User.findById(payload.data._id)
+          .populate(userPopulate)
+          .exec();
+
         if (user) {
           return done(null, user);
         }

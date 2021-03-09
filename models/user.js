@@ -9,10 +9,12 @@ const UserSchema = new Schema({
   username: {
     type: String,
     required: true,
+    lowercase: true,
   },
   email: {
     type: String,
     required: true,
+    lowercase: true,
   },
   password: {
     type: String,
@@ -30,23 +32,37 @@ const UserSchema = new Schema({
     {
       type: Schema.Types.ObjectId,
       ref: "post",
-      default: []
+      default: [],
     },
   ],
   followers: [
     {
       type: Schema.Types.ObjectId,
       ref: "user",
-      default: []
+      default: [],
     },
   ],
   following: [
     {
       type: Schema.Types.ObjectId,
       ref: "user",
-      default: []
+      default: [],
     },
   ],
+  story: {
+    type: Schema.Types.ObjectId,
+    ref: "story",
+  },
+  activities: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "userActivity",
+    },
+  ],
+  unreadActivitiesCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 UserSchema.pre("save", async function (next) {
@@ -77,9 +93,9 @@ UserSchema.methods.short = function () {
   delete obj.followers;
   delete obj.following;
   delete obj.saved;
-  delete obj.posts
+  delete obj.posts;
   delete obj.bio;
-  delete obj.email
+  delete obj.email;
   return obj;
 };
 
